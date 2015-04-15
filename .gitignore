@@ -1,0 +1,62 @@
+chrome.browserAction.onClicked.addListener(function(tab) {
+
+  if (tab.url.indexOf("http://www.nicovideo.jp/") == -1) {
+    alert('ニコニコのページじゃないとか、ログインしてないとかです');
+    return;
+  }
+  
+  var videoIDPos = tab.url.indexOf("sm");
+  var videoID = tab.url.slice(videoIDPos);
+  
+  var url = "http://www.nicovideo.jp/my/mylist/";
+  var request = createXMLHttpRequest();
+  request.open("POST", url, true);
+  request.onload = function (e) {
+    if ((request.readyState === 4) && (request.status === 200)) {
+        
+        html = request.responseText;
+        
+        arr = html.split(/\r\n|\r|\n/);
+      
+        for (i=0; i<arr.length-1; i++) {
+          if (arr[i].indexOf("NicoAPI.token") > 0) {
+            token = arr[i].slice(18, 76);
+          }
+        }
+        
+        if (!token) {
+          alert('ニコニコのページじゃないとか、ログインしてないとかです');
+          return;
+        }
+        
+        url = "http://www.nicovideo.jp/api/deflist/add?item_id=" + videoID + "&token=" + token;
+        
+        request.open("POST", url, true);
+        request.onload = null;
+        request.send();
+        
+        alert('マイリス登録しました');
+    }
+  };
+
+  request.send();
+  
+});
+
+function createXMLHttpRequest() {
+  if (window.XMLHttpRequest) {
+    return new XMLHttpRequest();
+  } else if (window.ActiveXObject) {
+    try {
+      return new ActiveXObject("Msxml2.XMLHTTP");
+    } catch (e) {
+      try {
+        return new ActiveXObject("Microsoft.XMLHTTP");
+      } catch (e2) {
+        return null;
+      }
+    }
+  } else {
+    return null;
+  }
+}
